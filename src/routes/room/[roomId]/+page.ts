@@ -16,14 +16,18 @@ const sanitizeAssociatedVideo = (videoRef: string) => {
 export const load = async ({ params, fetch }) => {
     try {
         // Extract roomId from params
+        console.log("Params", params)
         const roomId = params.roomId.split('&')[0];
+        console.log("Room ID", roomId)
+        const rooms = await pb.collection('rooms').getFullList({ filter: `room_id = "${roomId}"` })
+        console.log("Rooms", rooms)
+        const representatives = await pb.collection('users').getFullList({ filter: 'representative = true' })
+        console.log("Representatives", representatives)
 
         // Parallel data fetching
-        const [representatives, users, rooms] = await Promise.all([
-            pb.collection('users').getFullList({ filter: 'representative = true' }),
-            pb.collection('users').getFullList(),
-            pb.collection('rooms').getFullList({ filter: `room_id = "${roomId}"` })
-        ]);
+        const users = await pb.collection('users').getFullList()
+        console.log("Users", users)
+
 
         console.log("Rooms", rooms)
 
@@ -49,15 +53,5 @@ export const load = async ({ params, fetch }) => {
         };
     } catch (error) {
         console.error('Error loading room data:', error);
-        
-        // Return default values on error
-        return {
-            user: null,
-            representatives: [],
-            users: [],
-            roomId: [],
-            videoRepresentatives: [],
-            videoRepresentativesInfo: []
-        };
     }
 };

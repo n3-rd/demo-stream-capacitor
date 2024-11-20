@@ -36,7 +36,7 @@
     }
     let videoUrl;
     $: {
-        videoUrl = $currentVideoUrl || `/static/video${roomId[0].associated_video}`;
+        videoUrl = $currentVideoUrl || `http://localhost:3003/static/video${roomId[0].associated_video}`;
     }
 
     let audioTrackSet = false;

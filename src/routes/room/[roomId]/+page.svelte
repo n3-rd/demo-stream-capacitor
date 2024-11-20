@@ -27,6 +27,7 @@
         import { chatMessages } from '$lib/stores/chatMessages';
     
     export let data;
+    console.log("Data", data)
     let roomIdentity = data.roomId;
     console.log("Room identity", roomIdentity)
     
@@ -165,6 +166,11 @@
     });
     
     function initializeWebRTC() {
+        if (!roomIdentity?.[0]?.room_id) {
+            console.error('No valid room ID found');
+            return;
+        }
+
         webRTCAdaptor = new WebRTCAdaptor({
             websocket_url: getWebSocketURL(),
             mediaConstraints,
@@ -184,8 +190,11 @@
         switch (info) {
             case "initialized":
                 console.log("WebRTC initialized");
-                
-                joinRoom();
+                // Add delay before joining room
+                setTimeout(() => {
+                    console.log("Joining room after delay...");
+                    joinRoom();
+                }, 2000); // 2 second delay
                 break;
             case "broadcastObject":
                 if (obj.broadcast === undefined) return;
@@ -285,7 +294,17 @@
     
     function handleWebRTCError(error: string, message: string) {
         console.error("WebRTC Error:", error, message);
-        // Implement error handling
+        
+        if (error === "no_stream_exist") {
+            isNoStreamExist = true;
+            // Retry playing the stream after a delay
+            setTimeout(() => {
+                if (webRTCAdaptor && !isPlaying) {
+                    console.log('Retrying stream play...');
+                    webRTCAdaptor.play(roomName);
+                }
+            }, 3000); // Retry after 3 seconds
+        }
     }
     
     function sanitizeStreamName(name: string): string {
@@ -304,6 +323,7 @@
         const sanitizedName = sanitizeStreamName(name || anonymousUserId);
         const sanitizedRoomName = sanitizeStreamName(roomName);
     
+        // First publish our stream (if not playOnly)
         if (!playOnly) {
             const streamId = `${publishStreamId}-${sanitizedName}`;
             console.log('starting publish with streamId:', streamId);
@@ -321,10 +341,16 @@
                 sanitizedName,
                 roomIdentity[0].room_id
             );
+
+            // Increase delay before playing to 2 seconds
+            setTimeout(() => {
+                console.log('starting play with roomName:', sanitizedRoomName);
+                webRTCAdaptor.play(sanitizedRoomName);
+            }, 2000);
+        } else {
+            // If playOnly, just play immediately
+            webRTCAdaptor.play(sanitizedRoomName);
         }
-    
-        console.log('starting play with roomName:', sanitizedRoomName);
-        webRTCAdaptor.play(sanitizedRoomName);
     }
     
     function leaveRoom() {
@@ -661,7 +687,7 @@
     
     let videoURL;
     
-    let videoUrl = $currentVideoUrl || `${roomIdentity[0].associated_video}`;
+    let videoUrl = `http://localhost:3001${roomIdentity?.[0]?.associated_video ?? ''}`;
     console.log("videoUrl", videoUrl);
     
     // Add timestamp for throttling
@@ -749,13 +775,16 @@
     
     
     {#if !isAuthenticated && (!$anonymousUser || $anonymousUser === '')}
-        <NameInputModal on:nameSubmitted={handleNameSubmitted} roomName={roomIdentity[0]?.associated_video_name} />
+        <NameInputModal 
+            on:nameSubmitted={handleNameSubmitted} 
+            roomName={roomIdentity?.[0]?.associated_video_name ?? ''} 
+        />
     {:else}
     <div class="h-screen min-w-full bg-[#9d9d9f] relative overflow-hidden">
         <div class="h-full">
             <div class="flex items-center h-full pt-6 pb-24">
                 <!-- left sidebar -->
-                 <LeftBar joinURL={joinURL} videoRepresentatives={videoRepresentatives} userId={user?.id || ''} {scheduleOpen} on:closeSchedule={handleScheduleClose} />
+                 <!-- <LeftBar joinURL={joinURL} videoRepresentatives={videoRepresentatives} userId={user?.id || ''} {scheduleOpen} on:closeSchedule={handleScheduleClose} /> -->
                  <div class="flex-grow h-full bg-[#9d9d9f] relative flex gap-2">
                     {#if isHost || isRepresentative}
                         <div class="video-container h-full w-full">
@@ -884,7 +913,14 @@
         </div>
     
         <!-- Bottom controls bar -->
-        <BottomBar roomIdentityName={roomIdentity[0]?.associated_video_name} isMicMuted={isMicMuted} on:leaveRoom={leaveRoom} on:toggleMicrophone={toggleMicrophone} isCameraOff={isCameraOff} on:toggleCamera={toggleCamera} />
+        <BottomBar 
+            roomIdentityName={roomIdentity?.[0]?.associated_video_name ?? ''} 
+            {isMicMuted} 
+            on:leaveRoom={leaveRoom} 
+            on:toggleMicrophone={toggleMicrophone} 
+            isCameraOff={isCameraOff} 
+            on:toggleCamera={toggleCamera} 
+        />
      
     {/if}
     
