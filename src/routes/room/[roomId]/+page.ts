@@ -8,11 +8,12 @@ const sanitizeAssociatedVideo = (videoRef: string) => {
     if (sanitizedVideo.endsWith('.mp4')) {
         sanitizedVideo = sanitizedVideo.slice(0, -4);
     }
+    console.log("Sanitized video", sanitizedVideo)
     return sanitizedVideo;
 }
 
 // Client-side load function
-export const load = async ({ params }) => {
+export const load = async ({ params, fetch }) => {
     try {
         // Extract roomId from params
         const roomId = params.roomId.split('&')[0];
@@ -24,6 +25,8 @@ export const load = async ({ params }) => {
             pb.collection('rooms').getFullList({ filter: `room_id = "${roomId}"` })
         ]);
 
+        console.log("Rooms", rooms)
+
         // Get video representatives info
         const videoRepresentatives = await pb.collection('room_videos_duplicate')
             .getFirstListItem(`video_ref = "${sanitizeAssociatedVideo(rooms[0].associated_video)}"`)
@@ -34,6 +37,7 @@ export const load = async ({ params }) => {
         const videoRepresentativesInfo = videoRepresentatives
             .map(rep => representatives.find(repInfo => repInfo.id === rep))
             .filter(Boolean);
+            console.log()
 
         return {
             user: pb.authStore.model,
@@ -45,6 +49,7 @@ export const load = async ({ params }) => {
         };
     } catch (error) {
         console.error('Error loading room data:', error);
+        
         // Return default values on error
         return {
             user: null,

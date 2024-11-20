@@ -1,5 +1,5 @@
 export async function getStreamInfo(roomId: string) {
-    const apiUrl = `/api/stream/info?roomId=${roomId}`;
+    const apiUrl = `http://localhost:3001/api/stream/info?roomId=${roomId}`;
 
     try {
         const response = await fetch(apiUrl, {

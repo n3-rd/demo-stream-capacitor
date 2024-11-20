@@ -7,7 +7,7 @@ export async function sendMessage(messageId: string, messageDate: number, messag
     };
 
     try {
-        const response = await fetch('/api/stream/message', {
+        const response = await fetch('http://localhost:3001/api/stream/message', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

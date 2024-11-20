@@ -27,6 +27,8 @@
         import { chatMessages } from '$lib/stores/chatMessages';
     
     export let data;
+    let roomIdentity = data.roomId;
+    console.log("Room identity", roomIdentity)
     
     // Reactive declarations for data from the load function
     $: ({
@@ -882,7 +884,7 @@
         </div>
     
         <!-- Bottom controls bar -->
-        <BottomBar roomIdentityName={roomIdentity[0].associated_video_name} isMicMuted={isMicMuted} on:leaveRoom={leaveRoom} on:toggleMicrophone={toggleMicrophone} isCameraOff={isCameraOff} on:toggleCamera={toggleCamera} />
+        <BottomBar roomIdentityName={roomIdentity[0]?.associated_video_name} isMicMuted={isMicMuted} on:leaveRoom={leaveRoom} on:toggleMicrophone={toggleMicrophone} isCameraOff={isCameraOff} on:toggleCamera={toggleCamera} />
      
     {/if}
     
